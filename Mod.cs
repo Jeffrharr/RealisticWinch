@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Il2Cpp;
 using Il2CppFusion;
 using MelonLoader;
-using JoofFramework;
+using JoofOTHFramework;
 using UnityEngine;
 
 [assembly: MelonInfo(typeof(RealisticWinch.Mod), "RealisticWinch", "1.0.0", "HillModding")]

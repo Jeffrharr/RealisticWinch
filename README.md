@@ -8,12 +8,12 @@ A [MelonLoader](https://github.com/LavaGang/MelonLoader) mod for Over the Hill. 
 - Two trucks winched together over an arch hang off each other (simul-rappel).
 - The game's rope is replaced with one that follows the bends.
 
-Works with [WinchUnlimited](https://github.com/Jeffrharr/WinchUnlimited). Use both for long rappels. Requires JoofFramework, the shared HillModding library.
+Works with [WinchUnlimited](https://github.com/Jeffrharr/WinchUnlimited). Use both for long rappels. Requires JoofOTHFramework, the shared HillModding library.
 
 ## Install
 
 1. Install MelonLoader 0.7.x into Over the Hill. Start the game once so it sets itself up, then quit.
-2. Install JoofFramework into the game's `UserLibs/` folder.
+2. Install JoofOTHFramework into the game's `UserLibs/` folder.
 3. Put `RealisticWinch.dll` into the game's `Mods/` folder.
 
 Linux / Steam Deck (native build): MelonLoader needs the [.NET 6 runtime](https://dotnet.microsoft.com/download/dotnet/6.0), for example extracted to `~/.local/share/dotnet6`. Steam launch options:
@@ -40,7 +40,7 @@ The project builds against the DLLs in your game folder, so it needs:
 
 - the .NET SDK (6.0 or newer)
 - MelonLoader installed and run once, so `MelonLoader/Il2CppAssemblies/` exists
-- `JoofFramework.dll` in the game's `UserLibs/`
+- `JoofOTHFramework.dll` in the game's `UserLibs/`
 
 ```
 dotnet build

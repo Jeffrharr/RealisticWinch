@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Il2Cpp;
 using MelonLoader;
-using JoofFramework;
+using JoofOTHFramework;
 using UnityEngine;
 using NVector3 = System.Numerics.Vector3;
 
