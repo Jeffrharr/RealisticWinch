@@ -54,7 +54,8 @@ public class Mod : MelonMod
     public override void OnUpdate()
     {
         HillNet.Tick();
-        if (host != null) return;
+        // Unity destroys the helper object while the game closes; don't make a new one then
+        if (host != null || Core.Quitting) return;
         host = new GameObject("RealisticWinch") { hideFlags = HideFlags.HideAndDontSave };
         UnityEngine.Object.DontDestroyOnLoad(host);
         host.AddComponent<RopeWrap>();
