@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>RealisticWinch</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <GameDir>$(HOME)/.local/share/Steam/steamapps/common/over the hill</GameDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Unit tests for the pure rope maths build separately -->
+    <Compile Remove="Tests/**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(GameDir)/MelonLoader/net6/MelonLoader.dll" Private="false" />
+    <Reference Include="$(GameDir)/MelonLoader/net6/Il2CppInterop.Runtime.dll" Private="false" />
+    <Reference Include="$(GameDir)/MelonLoader/net6/Il2CppInterop.Common.dll" Private="false" />
+    <Reference Include="$(GameDir)/MelonLoader/Il2CppAssemblies/*.dll" Private="false" />
+    <!-- Shared hooks and networking; build ../OverTheHillCore first -->
+    <Reference Include="$(GameDir)/UserLibs/OverTheHillCore.dll" Private="false" />
+  </ItemGroup>
+  <Target Name="Deploy" AfterTargets="Build">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(GameDir)/Mods" />
+  </Target>
+</Project>
