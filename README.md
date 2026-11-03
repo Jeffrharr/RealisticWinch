@@ -1,5 +1,7 @@
 # RealisticWinch
 
+![RealisticWinch](media/title.png)
+
 A [MelonLoader](https://github.com/LavaGang/MelonLoader) mod for Over the Hill. The winch rope bends around rocks, trees and terrain instead of passing through them, and slack rope lies on the ground.
 
 - While the rope is bent, it pulls along the whole path like a rope over a pulley, with friction over the bends.
