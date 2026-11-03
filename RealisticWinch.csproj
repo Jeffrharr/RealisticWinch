@@ -15,8 +15,8 @@
     <Reference Include="$(GameDir)/MelonLoader/net6/Il2CppInterop.Runtime.dll" Private="false" />
     <Reference Include="$(GameDir)/MelonLoader/net6/Il2CppInterop.Common.dll" Private="false" />
     <Reference Include="$(GameDir)/MelonLoader/Il2CppAssemblies/*.dll" Private="false" />
-    <!-- Shared hooks and networking; build ../OverTheHillCore first -->
-    <Reference Include="$(GameDir)/UserLibs/OverTheHillCore.dll" Private="false" />
+    <!-- Shared hooks and networking; build ../JoofFramework first -->
+    <Reference Include="$(GameDir)/UserLibs/JoofFramework.dll" Private="false" />
   </ItemGroup>
   <Target Name="Deploy" AfterTargets="Build">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(GameDir)/Mods" />
