@@ -6,7 +6,7 @@ using MelonLoader;
 using JoofOTHFramework;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(RealisticWinch.Mod), "RealisticWinch", "1.0.0", "Joof")]
+[assembly: MelonInfo(typeof(RealisticWinch.Mod), "RealisticWinch", "1.1.0", "Joof")]
 [assembly: MelonGame("Funselektor", "over the hill")]
 
 namespace RealisticWinch;

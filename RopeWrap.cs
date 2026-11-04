@@ -33,13 +33,40 @@ public class RopeWrap : MonoBehaviour
     }
 
     readonly Dictionary<IntPtr, Rope> ropes = new();
-    readonly List<VehicleWinchSystem> winches = new();
-    float nextScan;
+    readonly List<NVector3> drawPath = new();
     Material lineMaterial;
 
     public RopeWrap(IntPtr ptr) : base(ptr) { }
 
-    void Awake() => Instance = this;
+    void Awake()
+    {
+        Instance = this;
+        // The framework follows winches as they spawn and despawn; a gone winch takes its rope with it
+        Tracking.Winches.Removed += OnWinchRemoved;
+        Tracking.PlayerMoved += OnPlayerMoved;
+    }
+
+    void OnDestroy()
+    {
+        Tracking.Winches.Removed -= OnWinchRemoved;
+        Tracking.PlayerMoved -= OnPlayerMoved;
+    }
+
+    void OnWinchRemoved(VehicleWinchSystem w) => Drop(w.Pointer, null);
+
+    // A car at either end jumped (fast travel, respawn, jack): the old wraps would sweep the rope
+    // across the map, so start the rope again from where it is now
+    void OnPlayerMoved(int playerId)
+    {
+        if (ropes.Count == 0) return;
+        foreach (var w in Tracking.Winches.Items)
+        {
+            if (!ropes.ContainsKey(w.Pointer)) continue;
+            bool mine = w.Object != null && w.Object.InputAuthority.PlayerId == playerId;
+            bool towing = w.WinchState == VehicleWinchSystem.WinchStates.AttachedToOtherPlayer && w.WinchedCarPlayerRef.PlayerId == playerId;
+            if (mine || towing) Drop(w.Pointer, w);
+        }
+    }
 
     // Only bend the rope when this machine's physics agrees with the host's
     static bool Active =>
@@ -54,6 +81,8 @@ public class RopeWrap : MonoBehaviour
     {
         public static readonly UnityObstacles Instance = new();
         int obstacleMask, groundMask;
+        // Reused for every cast; the rope casts several times a physics step while it's out
+        readonly Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<RaycastHit> hits = new(32);
 
         void Masks()
         {
@@ -78,10 +107,10 @@ public class RopeWrap : MonoBehaviour
         {
             Masks();
             hit = default;
-            var hits = Physics.RaycastAll(U(origin), U(direction), maxDistance, obstacleMask, QueryTriggerInteraction.Ignore);
+            int count = Physics.RaycastNonAlloc(U(origin), U(direction), hits, maxDistance, obstacleMask, QueryTriggerInteraction.Ignore);
             float best = float.MaxValue;
             bool found = false;
-            for (int i = 0; i < hits.Length; i++)
+            for (int i = 0; i < count; i++)
             {
                 var h = hits[i];
                 if (h.distance < 1e-3f || h.distance >= best) continue;
@@ -118,20 +147,10 @@ public class RopeWrap : MonoBehaviour
 
     void Tick()
     {
-        if (Time.time >= nextScan)
+        var winches = Tracking.Winches.Items;
+        for (int i = 0; i < winches.Count; i++)
         {
-            nextScan = Time.time + 1f;
-            winches.Clear();
-            winches.AddRange(FindObjectsOfType<VehicleWinchSystem>());
-            var live = new HashSet<IntPtr>();
-            foreach (var w in winches) if (w != null) live.Add(w.Pointer);
-            foreach (var key in new List<IntPtr>(ropes.Keys))
-                if (!live.Contains(key)) Drop(key, null);
-        }
-
-        foreach (var w in winches)
-        {
-            if (w == null) continue;
+            var w = winches[i];
             var state = w.WinchState;
             if (!Active || state == VehicleWinchSystem.WinchStates.Disabled || !TryGetEnds(w, out var a, out _, out var b, out _))
             {
@@ -215,7 +234,7 @@ public class RopeWrap : MonoBehaviour
         }
         else if (state == VehicleWinchSystem.WinchStates.AttachedToOtherPlayer)
         {
-            var other = Instance != null ? Instance.CarOf(w.WinchedCarPlayerRef.PlayerId) : null;
+            var other = CarOf(w.WinchedCarPlayerRef.PlayerId);
             rbB = other != null ? other.carRigidbody : null;
             if (rbB == null) return false;
             b = rbB.worldCenterOfMass;
@@ -226,10 +245,10 @@ public class RopeWrap : MonoBehaviour
         return true;
     }
 
-    VehicleWinchSystem CarOf(int playerId)
+    static VehicleWinchSystem CarOf(int playerId)
     {
-        foreach (var w in winches)
-            if (w != null && w.Object != null && w.Object.InputAuthority.PlayerId == playerId) return w;
+        foreach (var w in Tracking.Winches.Items)
+            if (w.Object != null && w.Object.InputAuthority.PlayerId == playerId) return w;
         return null;
     }
 
@@ -309,9 +328,12 @@ public class RopeWrap : MonoBehaviour
 
     void Draw()
     {
-        foreach (var w in winches)
+        if (ropes.Count == 0) return;
+        var winches = Tracking.Winches.Items;
+        for (int i = 0; i < winches.Count; i++)
         {
-            if (w == null || !ropes.TryGetValue(w.Pointer, out var rope)) continue;
+            var w = winches[i];
+            if (!ropes.TryGetValue(w.Pointer, out var rope)) continue;
             if (!Mod.Visual.Value || !TryGetEnds(w, out var a, out _, out var b, out _))
             {
                 if (rope.Line != null) rope.Line.enabled = false;
@@ -330,12 +352,13 @@ public class RopeWrap : MonoBehaviour
             if (rope.Line == null) rope.Line = MakeLine();
             rope.Line.enabled = true;
 
-            var path = new List<NVector3>(rope.Path.Points.Count + 2) { N(a) };
-            path.AddRange(rope.Path.Points);
-            path.Add(N(b));
-            var line = RopeMath.Sag(path, w.RopeLength, UnityObstacles.Instance);
+            drawPath.Clear();
+            drawPath.Add(N(a));
+            drawPath.AddRange(rope.Path.Points);
+            drawPath.Add(N(b));
+            var line = RopeMath.Sag(drawPath, w.RopeLength, UnityObstacles.Instance);
             rope.Line.positionCount = line.Count;
-            for (int i = 0; i < line.Count; i++) rope.Line.SetPosition(i, U(line[i]));
+            for (int k = 0; k < line.Count; k++) rope.Line.SetPosition(k, U(line[k]));
         }
     }
 
